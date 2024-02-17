@@ -13,7 +13,55 @@ public class DeviceOperations {
 	private static Queue<String> sensorDataQueue = new LinkedList<>();
 	
 
-   
+   // Méthode pour ajouter un objet connecté de type capteur ou actionneur
+    public static void addObjetConnecte(Connection connection, Scanner scanner) {
+        System.out.println("Ajouter un objet connecté:");
+        System.out.print("Nom de l'objet: ");
+        String nom = scanner.nextLine(); 
+		 scanner.nextLine();
+        
+        System.out.println("Type (1 pour Capteur, 2 pour Actuateur): ");
+        int typeChoice = scanner.nextInt();
+        String type = typeChoice == 1 ? "Capteur" : "Actuateur";
+        scanner.nextLine(); 
+
+        System.out.print("Description: ");
+        String description = scanner.nextLine();
+
+        System.out.print("État (1 pour actif, 0 pour inactif): ");
+        String etat = scanner.nextInt() == 1 ? "actif" : "inactif";
+        scanner.nextLine(); 
+
+        System.out.print("Position: ");
+        String position = scanner.nextLine();
+		
+		String code = generateUniqueCode();
+
+        String insertSql = "INSERT INTO objetconnecte (code, nom, type, description, etat, position) VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(insertSql)) {
+            pstmt.setString(1, code);
+            pstmt.setString(2, nom);
+            pstmt.setString(3, type);
+            pstmt.setString(4, description);
+            pstmt.setString(5, etat);
+            pstmt.setString(6, position);
+            pstmt.executeUpdate();
+            System.out.println("Objet connecté ajouté avec succès. Code unique: " + code);
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de l'ajout de l'objet connecté: " + e.getMessage());
+        }
+    }
+	
+	 private static String generateUniqueCode() {
+        Random random = new Random();
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder code = new StringBuilder(4);
+        for (int i = 0; i < 4; i++) {
+            code.append(characters.charAt(random.nextInt(characters.length())));
+        }
+        return code.toString();
+    }
+
 
 
 		    public static void simulateSensorData(Connection connection, Scanner scanner) {
@@ -89,7 +137,66 @@ try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
 
 
 
-   
+    public static void displayObjetConnecteDetails(Connection connection, Scanner scanner) {
+    System.out.println("Entrez le code de l'objet connecté pour voir les détails :");
+    String code = scanner.next(); // Lire le code de l'objet connecté
+
+    String sql = "SELECT * FROM objetconnecte WHERE code = ?";
+    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        pstmt.setString(1, code);
+        try (ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                // Afficher les détails de base de l'objet connecté
+                System.out.println("Détails de l'objet connecté :");
+                System.out.println("Code : " + rs.getString("code"));
+                System.out.println("Nom : " + rs.getString("nom"));
+                System.out.println("Type : " + rs.getString("type"));
+                System.out.println("Description : " + rs.getString("description"));
+                System.out.println("État : " + rs.getString("etat"));
+                System.out.println("Position : " + rs.getString("position"));
+
+                // Afficher les détails supplémentaires en fonction du type
+                String type = rs.getString("type");
+                if ("Capteur".equals(type)) {
+                    // Récupérer et afficher les données spécifiques des capteurs
+                    displaySensorData(connection, code);
+                } else if ("Actuateur".equals(type)) {
+                    // Récupérer et afficher les commandes spécifiques des actionneurs
+                    displayActuatorData(connection, code);
+                }
+            } else {
+                System.out.println("Aucun objet connecté trouvé avec le code spécifié.");
+            }
+        }
+    } catch (SQLException e) {
+        System.err.println("Erreur lors de la recherche de l'objet connecté: " + e.getMessage());
+    }
+}
+
+private static void displaySensorData(Connection connection, String code) {
+    String sql = "SELECT * FROM objetsensor WHERE code_sensor = ? ORDER BY data_timestamp DESC"; // Ajouté ORDER BY pour trier par timestamp
+    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        pstmt.setString(1, code);
+        try (ResultSet rs = pstmt.executeQuery()) {
+            boolean found = false;
+            while (rs.next()) {  
+                if (!found) {
+                    System.out.println("Données du capteur :");
+                    found = true;
+                }
+                //  stocke un JSON avec des valeurs de capteur
+                String data = rs.getString("data");
+                System.out.println("Données : " + data);
+                
+            }
+            if (!found) {
+                System.out.println("Aucune donnée trouvée pour le capteur avec le code " + code);
+            }
+        }
+    } catch (SQLException e) {
+        System.err.println("Erreur lors de l'affichage des données du capteur: " + e.getMessage());
+    }
+}
 
 
 	private static void displayActuatorData(Connection connection, String code) {
