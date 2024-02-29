@@ -3,9 +3,13 @@ package com.zugusiot;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.sql.Connection;
+import org.json.JSONObject;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,14 +38,34 @@ public class DevicesManager {
 
     private static void startHttpServer() {
         try {
-            HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+            HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
             server.createContext("/sensor-data", new HttpHandler() {
                 @Override
                 public void handle(HttpExchange exchange) throws IOException {
                     if ("POST".equals(exchange.getRequestMethod())) {
-                        // Logique pour traiter les données reçues ici
-                        
-                        String response = "Données reçues avec succès";
+                        InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
+                        BufferedReader br = new BufferedReader(isr);
+                        StringBuilder buf = new StringBuilder();
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            buf.append(line);
+                        }
+                        String body = buf.toString();
+                        JSONObject jsonObj = new JSONObject(body);
+
+                        // Extraire et traiter le code unique et les autres données
+                        String codeMicrocontroleur = jsonObj.optString("code", "inconnu");
+                        jsonObj.remove("code");
+                        StringBuilder dataBuilder = new StringBuilder(codeMicrocontroleur);
+                        jsonObj.keys().forEachRemaining(key -> {
+                            Object value = jsonObj.get(key);
+                            dataBuilder.append(", ").append(key).append(":").append(value.toString());
+                        });
+
+                        // Ajouter la chaîne de données à la file d'attente pour un traitement ultérieur
+                        DeviceOperations.addDataToQueue(dataBuilder.toString());
+
+                        String response = "Donnée ajoutée à la file d'attente avec succès";
                         exchange.sendResponseHeaders(200, response.getBytes().length);
                         OutputStream os = exchange.getResponseBody();
                         os.write(response.getBytes());

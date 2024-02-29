@@ -80,6 +80,12 @@ public class DeviceOperations {
         
     }
 
+    
+public static void addDataToQueue(String data) {
+    sensorDataQueue.add(data);
+}
+
+
 		// Méthode pour vérifier si un code appartient à un capteur
 
 
