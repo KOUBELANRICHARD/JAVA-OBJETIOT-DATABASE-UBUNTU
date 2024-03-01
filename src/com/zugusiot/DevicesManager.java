@@ -1,5 +1,12 @@
 package com.zugusiot;
 
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,13 +25,38 @@ public class DevicesManager {
             setupDatabase(connection);
             runMenu(connection);
             scheduleDataProcessing(); 
+            startHttpServer();
         } catch (Exception e) {
             System.err.println("Erreur de connexion à la base de données : " + e.getMessage());
         }
     }
     
 
-   
+    private static void startHttpServer() {
+        try {
+            HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+            server.createContext("/sensor-data", new HttpHandler() {
+                @Override
+                public void handle(HttpExchange exchange) throws IOException {
+                    if ("POST".equals(exchange.getRequestMethod())) {
+                        // Logique pour traiter les données reçues ici
+                        
+                        String response = "Données reçues avec succès";
+                        exchange.sendResponseHeaders(200, response.getBytes().length);
+                        OutputStream os = exchange.getResponseBody();
+                        os.write(response.getBytes());
+                        os.close();
+                    } else {
+                        exchange.sendResponseHeaders(405, -1); // 405 Method Not Allowed
+                    }
+                }
+            });
+            server.start();
+            System.out.println("Server started on port 8000");
+        } catch (IOException e) {
+            System.err.println("Erreur lors du démarrage du serveur : " + e.getMessage());
+        }
+    }
 
     private static void setupDatabase(Connection connection) throws SQLException {
         try (Statement statement = connection.createStatement()) {
