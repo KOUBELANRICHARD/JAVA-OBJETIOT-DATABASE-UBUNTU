@@ -5,9 +5,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Scanner;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+
 
 public class DeviceOperations {
 	private static Queue<String> sensorDataQueue = new LinkedList<>();
@@ -90,35 +96,50 @@ public static void addDataToQueue(String data) {
 
 
 		// Méthode pour traiter les données de la file d'attente et les insérer dans la base de données
-				public static void processSensorDataQueue(Connection connection) {
-                System.out.println("Début du traitement de la file d'attente des données du capteur.");
-        while (!sensorDataQueue.isEmpty()) {
-            String data = sensorDataQueue.poll();
-            String[] parts = data.split(":");
-            String codeSensor = parts[0];
-            double value = Double.parseDouble(parts[1]);
+         // Assurez-vous d'importer la bibliothèque JSON
 
-            if (verifySensorCode(connection, codeSensor)) {
-                String insertSql = "INSERT INTO objetsensor (code_sensor, data) VALUES (?, ?)";
-try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
-    insertStmt.setString(1, codeSensor);
-	
-    // Création de chaine Json
-    String jsonData = String.format("{\"value\": %.2f}", value);
-    insertStmt.setString(2, jsonData);
-
-    int rowsAffected = insertStmt.executeUpdate();
-    if (rowsAffected > 0) {
-        System.out.println("Données traitées et insérées avec succès pour le capteur " + codeSensor);
-    }
-} catch (SQLException e) {
-    System.err.println("Erreur lors de l'insertion des données du capteur: " + e.getMessage());
-}
-
+         public static void processSensorDataQueue(Connection connection) {
+            System.out.println("Début du traitement de la file d'attente des données du capteur.");
+            while (!sensorDataQueue.isEmpty()) {
+                String data = sensorDataQueue.poll();
+                System.out.println("Traitement des données : " + data);
+        
+                try {
+                    JSONObject jsonData = new JSONObject(data);
+                    String codeSensor = jsonData.getString("code");
+                    jsonData.remove("code");
+        
+                    // Obtenez la date et l'heure actuelles
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String currentDateTime = now.format(formatter);
+                    jsonData.put("dateTime", currentDateTime); // Ajoutez la date et l'heure au JSON
+        
+                    if (verifySensorCode(connection, codeSensor)) {
+                        String insertSql = "INSERT INTO objetsensor (code_sensor, data) VALUES (?, ?)";
+                        try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                            insertStmt.setString(1, codeSensor);
+                            insertStmt.setString(2, jsonData.toString()); // Le JSON contient maintenant la date et l'heure
+                            int rowsAffected = insertStmt.executeUpdate();
+                            if (rowsAffected > 0) {
+                                System.out.println("Données traitées et insérées avec succès pour le capteur " + codeSensor);
+                            }
+                        }
+                    }
+                } catch (JSONException e) {
+                    System.err.println("Erreur lors de l'analyse JSON des données du capteur: " + e.getMessage() + " pour les données: " + data);
+                } catch (SQLException e) {
+                    System.err.println("Erreur SQL lors de l'insertion des données du capteur: " + e.getMessage());
+                } catch (Exception e) {
+                    System.err.println("Erreur générale lors du traitement des données du capteur: " + e.getMessage());
+                }
+            }
+            System.out.println("Fin du traitement de la file d'attente des données du capteur.");
         }
-        System.out.println("Fin du traitement de la file d'attente des données du capteur.");
-    }
-}
+        
+        
+        
+        
 
 	
 	private static boolean verifySensorCode(Connection connection, String codeSensor) {

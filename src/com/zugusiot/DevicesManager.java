@@ -52,18 +52,13 @@ public class DevicesManager {
                         }
                         String body = buf.toString();
                         JSONObject jsonObj = new JSONObject(body);
+                        System.out.println("JSON reçu: " + jsonObj.toString()); // Debugging
+                        DeviceOperations.addDataToQueue(jsonObj.toString());
+                        
+                        
 
                         // Extraire et traiter le code unique et les autres données
-                        String codeMicrocontroleur = jsonObj.optString("code", "inconnu");
-                        jsonObj.remove("code");
-                        StringBuilder dataBuilder = new StringBuilder(codeMicrocontroleur);
-                        jsonObj.keys().forEachRemaining(key -> {
-                            Object value = jsonObj.get(key);
-                            dataBuilder.append(", ").append(key).append(":").append(value.toString());
-                        });
-
-                        // Ajouter la chaîne de données à la file d'attente pour un traitement ultérieur
-                        DeviceOperations.addDataToQueue(dataBuilder.toString());
+                       
 
                         String response = "Donnée ajoutée à la file d'attente avec succès";
                         exchange.sendResponseHeaders(200, response.getBytes().length);
