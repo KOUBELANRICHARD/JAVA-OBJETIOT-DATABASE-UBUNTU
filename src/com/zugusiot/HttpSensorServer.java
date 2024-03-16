@@ -16,9 +16,7 @@ public class HttpSensorServer {
     public static void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         // Pseudocode pour un serveur HTTP générique, ajustez pour votre serveur spécifique
-response.setHeader("Access-Control-Allow-Origin", "*"); // Permet à toutes les origines
-response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
 
         // Ajoute un gestionnaire pour les données des capteurs
         server.createContext("/sensor-data", exchange -> {

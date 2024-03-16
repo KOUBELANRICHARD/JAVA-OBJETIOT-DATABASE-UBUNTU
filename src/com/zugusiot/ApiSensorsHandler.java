@@ -18,10 +18,11 @@ import java.sql.Statement;
 public class ApiSensorsHandler implements HttpHandler {
     @Override
 public void handle(HttpExchange exchange) throws IOException {
+    CorsHeaders.addCorsHeaders(exchange);
     String response = "";
     byte[] responseBytes;
     try {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        //exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         
         if ("GET".equals(exchange.getRequestMethod())) {
             // ... Votre code pour la gestion de GET
