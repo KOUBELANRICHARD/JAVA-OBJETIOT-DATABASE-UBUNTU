@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import org.json.JSONObject;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -70,8 +69,10 @@ public class DevicesManager {
                     }
                 }
             });
+            server.createContext("/api/sensors", new ApiSensorsHandler());
+
             server.start();
-            System.out.println("Server started on port 8000");
+            System.out.println("Server started on port 8080");
         } catch (IOException e) {
             System.err.println("Erreur lors du démarrage du serveur : " + e.getMessage());
         }
