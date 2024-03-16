@@ -1,0 +1,3 @@
+$('#tableclients').dataTable( {
+  "searching": true
+} );

@@ -1,0 +1,3 @@
+$('#tabledispositifs').dataTable( {
+  "searching": true
+} );

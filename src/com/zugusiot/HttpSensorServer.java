@@ -9,8 +9,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.json.JSONObject;
-import javax.servlet.*;
-import javax.servlet.http.HttpServletResponse;
+
 
 public class HttpSensorServer {
 
@@ -67,26 +66,7 @@ response.setHeader("Access-Control-Allow-Headers", "Content-Type");
         System.out.println("Server started on port 8080");
     }
 
-     public class CorsFilter implements Filter {
-
-        public void init(FilterConfig filterConfig) throws ServletException {
-            // Initialisation du filtre, si nécessaire
-        }
     
-        public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-            HttpServletResponse res = (HttpServletResponse) response;
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    
-            // Pass the request along the filter chain
-            chain.doFilter(request, response);
-        }
-    
-        public void destroy() {
-            // Nettoyage du filtre, si nécessaire
-        }
-    }
 
     public static void main(String[] args) throws IOException {
         startServer();
